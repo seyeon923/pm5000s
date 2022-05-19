@@ -9,5 +9,5 @@ configure_file(pm5000s_version.h.in pm5000s_version.h)
 
 add_compile_options(-Wall -Wextra -Wshadow -Wformat=2 -Wunused)
 
-add_executable(pm5000s pm5000s.cc)
+add_executable(pm5000s pm5000s.cc pm5000s.h)
 target_include_directories(pm5000s PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

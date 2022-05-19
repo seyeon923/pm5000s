@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 #include <string_view>
+#include <ios>
+#include <sstream>
 
 #include <string.h>
 #include <fcntl.h>
@@ -39,6 +41,31 @@ public:
     ~SerialPort() { Close(); }
 
     constexpr static speed_t BAUD_RATE = B9600;
+    enum class ErrorCode {
+        OK = 0,
+
+        RX_HEAD_ERR = 1,          // when received data's head isn't 0x16
+        NOT_ENOUGH_DATA_ERR = 2,  // when not all data's received
+        CHECKSUM_ERR = 3,         // when checksum failed
+        NOT_OPENED_ERR = 4,       // when device not opend
+    };
+
+    static char const* StrError(ErrorCode err_code) {
+        switch (err_code) {
+            case ErrorCode::OK:
+                return "No Error";
+            case ErrorCode::RX_HEAD_ERR:
+                return "Invalid Rx Header Received";
+            case ErrorCode::NOT_ENOUGH_DATA_ERR:
+                return "Not Enough Data Received";
+            case ErrorCode::CHECKSUM_ERR:
+                return "Checksum Error";
+            case ErrorCode::NOT_OPENED_ERR:
+                return "Device Not Opened";
+            default:
+                return "Unknown Error";
+        }
+    }
 
     bool Open(const std::string& device_path) {
         if (IsOpened()) {
@@ -79,6 +106,42 @@ public:
         device_path_.clear();
 
         return true;
+    }
+
+    ErrorCode GetSerialNo(std::string& serial_no) const {
+        serial_no.clear();
+
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        write(fd_, READ_SERIAL_NO_SEND_MSG_, sizeof(READ_SERIAL_NO_SEND_MSG_));
+
+        int nread = read(fd_, READ_BUF_, sizeof(READ_BUF_));
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < READ_SERIAL_NO_RECV_MSG_LEN) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        std::stringstream ss;
+        for (int i = 0; i < 5; ++i) {
+            int num = READ_BUF_[POS_DATA_START + i * 2] * 256 +
+                      READ_BUF_[POS_DATA_START + i * 2 + 1];
+            if (num) {
+                ss << num;
+            }
+        }
+        serial_no = ss.str();
+        if (serial_no.empty()) {
+            serial_no = "0";
+        }
+
+        return ErrorCode::OK;
     }
 
     const std::string& GetDevicePath() const { return device_path_; }
@@ -134,9 +197,9 @@ private:
         tty.c_oflag &= ~ONLCR;  // Prevent conversion of newline to carriage
                                 // return/line feed
 
-        tty.c_cc[VTIME] = 10;  // Wait for up to 1s(10 deciseconds)
-        tty.c_cc[VMIN] = 2;  // Wait until getting 2 characters at least, which
-                             // is (HEAD, LEN)
+        tty.c_cc[VTIME] = 5;  // Wait for up to 1s(10 deciseconds)
+        tty.c_cc[VMIN] = 56;  // Wait until getting 2 characters at least, which
+                              // is (HEAD, LEN)
 
         // Set in/out baud rate
         cfsetispeed(&tty, BAUD_RATE);
@@ -150,8 +213,41 @@ private:
         }
     }
 
+    ErrorCode CheckReceivedData(int read_len) const {
+        int data_len = READ_BUF_[POS_LEN];
+        int response_len = data_len + 3;
+        if (read_len < 2 || read_len < response_len) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        if (READ_BUF_[POS_HEAD] != RX_HEAD) {
+            return ErrorCode::RX_HEAD_ERR;
+        }
+
+        int checksum_pos = data_len + 2;
+        char checksum = 0;
+        for (int pos = 0; pos < response_len - 1; ++pos) {
+            checksum += READ_BUF_[pos];
+        }
+        if (READ_BUF_[checksum_pos] != static_cast<char>(256 - checksum)) {
+            return ErrorCode::CHECKSUM_ERR;
+        }
+
+        return ErrorCode::OK;
+    }
+
     int fd_;
     std::string device_path_;
+    mutable char READ_BUF_[256];
+
+    constexpr static char RX_HEAD = 0x16;
+    constexpr static int POS_HEAD = 0;
+    constexpr static int POS_LEN = 1;
+    constexpr static int POS_CMD = 2;
+    constexpr static int POS_DATA_START = 3;
+
+    constexpr static char READ_SERIAL_NO_SEND_MSG_[] = {0x11, 0x01, 0x1F, 0xCF};
+    constexpr static int READ_SERIAL_NO_RECV_MSG_LEN = 14;
 };
 }  // namespace pm5000s
 
