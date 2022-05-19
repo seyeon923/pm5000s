@@ -5,4 +5,7 @@ project(pm5000s VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+configure_file(pm5000s_version.h.in pm5000s_version.h)
+
 add_executable(pm5000s pm5000s.cc)
+target_include_directories(pm5000s PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

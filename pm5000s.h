@@ -12,6 +12,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "pm5000s_version.h"
+
 namespace pm5000s {
 
 void LogError(int err, std::string_view func_name,
@@ -36,11 +38,11 @@ public:
     }
     ~SerialPort() { Close(); }
 
-    bool IsOpen() const { return fd_ >= 0; }
+    bool IsOpened() const { return fd_ >= 0; }
 
     // return true if success
     bool Close() {
-        if (!IsOpen()) {
+        if (!IsOpened()) {
             return true;
         }
 
@@ -56,7 +58,7 @@ public:
 private:
     void Open() {
         fd_ = open(device_path_.c_str(), O_RDWR);
-        if (!IsOpen()) {
+        if (!IsOpened()) {
             LogError(errno, "open", "Failed to open device " + device_path_);
             return;
         }
