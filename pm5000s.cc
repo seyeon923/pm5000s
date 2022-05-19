@@ -12,14 +12,22 @@ int main(int argc, char const* const* const argv) {
 
     constexpr SerialPort::ErrorCode OK = SerialPort::ErrorCode::OK;
 
+    SerialPort::ErrorCode err = OK;
+
     SerialPort serial(argv[1]);
     std::string serial_no;
-    auto err = serial.GetSerialNo(serial_no);
-    if (err != OK) {
+    if (err = serial.ReadSerialNo(serial_no); err != OK) {
         std::cerr << SerialPort::StrError(err) << std::endl;
         return static_cast<int>(err);
     }
-    std::cout << "Serial NO: " << serial_no << std::endl;
+    std::cout << "Serial Number: " << serial_no << std::endl;
+
+    std::string sw_ver;
+    if (err = serial.ReadSwVersion(sw_ver); err != OK) {
+        std::cerr << SerialPort::StrError(err) << std::endl;
+        return static_cast<int>(err);
+    }
+    std::cout << "Software Version Number: " << sw_ver << std::endl;
 
     return 0;
 }

@@ -108,7 +108,7 @@ public:
         return true;
     }
 
-    ErrorCode GetSerialNo(std::string& serial_no) const {
+    ErrorCode ReadSerialNo(std::string& serial_no) const {
         serial_no.clear();
 
         if (!IsOpened()) {
@@ -117,21 +117,21 @@ public:
 
         write(fd_, READ_SERIAL_NO_SEND_MSG_, sizeof(READ_SERIAL_NO_SEND_MSG_));
 
-        int nread = read(fd_, READ_BUF_, sizeof(READ_BUF_));
+        int nread = Read();
 
         auto err = CheckReceivedData(nread);
         if (err != ErrorCode::OK) {
             return err;
         }
 
-        if (nread < READ_SERIAL_NO_RECV_MSG_LEN) {
+        if (nread < READ_SERIAL_NO_RECV_MSG_LEN_) {
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
         std::stringstream ss;
         for (int i = 0; i < 5; ++i) {
-            int num = READ_BUF_[POS_DATA_START + i * 2] * 256 +
-                      READ_BUF_[POS_DATA_START + i * 2 + 1];
+            int num = READ_BUF_[POS_DATA_START_ + i * 2] * 256 +
+                      READ_BUF_[POS_DATA_START_ + i * 2 + 1];
             if (num) {
                 ss << num;
             }
@@ -143,6 +143,37 @@ public:
 
         return ErrorCode::OK;
     }
+
+    ErrorCode ReadSwVersion(std::string& sw_ver) const {
+        sw_ver.clear();
+
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        write(fd_, READ_SW_VER_SEND_MSG_, sizeof(READ_SW_VER_SEND_MSG_));
+
+        int nread = Read();
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < READ_SW_VER_RECV_MSG_LEN_) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        constexpr int SW_VER_LEN = 13;
+        sw_ver.resize(SW_VER_LEN);
+        for (int i = 0; i < SW_VER_LEN; ++i) {
+            sw_ver[i] = READ_BUF_[POS_DATA_START_ + i];
+        }
+
+        return ErrorCode::OK;
+    }
+
+    void FlushReceivedBuffer() { Read(); }
 
     const std::string& GetDevicePath() const { return device_path_; }
 
@@ -214,13 +245,13 @@ private:
     }
 
     ErrorCode CheckReceivedData(int read_len) const {
-        int data_len = READ_BUF_[POS_LEN];
+        int data_len = READ_BUF_[POS_LEN_];
         int response_len = data_len + 3;
         if (read_len < 2 || read_len < response_len) {
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
-        if (READ_BUF_[POS_HEAD] != RX_HEAD) {
+        if (READ_BUF_[POS_HEAD_] != RX_HEAD_) {
             return ErrorCode::RX_HEAD_ERR;
         }
 
@@ -236,18 +267,27 @@ private:
         return ErrorCode::OK;
     }
 
+    int Read() const {
+        if (!IsOpened()) {
+            return 0;
+        }
+        return read(fd_, READ_BUF_, sizeof(READ_BUF_));
+    }
+
     int fd_;
     std::string device_path_;
     mutable char READ_BUF_[256];
 
-    constexpr static char RX_HEAD = 0x16;
-    constexpr static int POS_HEAD = 0;
-    constexpr static int POS_LEN = 1;
-    constexpr static int POS_CMD = 2;
-    constexpr static int POS_DATA_START = 3;
+    constexpr static char RX_HEAD_ = 0x16;
+    constexpr static int POS_HEAD_ = 0;
+    constexpr static int POS_LEN_ = 1;
+    constexpr static int POS_CMD_ = 2;
+    constexpr static int POS_DATA_START_ = 3;
 
     constexpr static char READ_SERIAL_NO_SEND_MSG_[] = {0x11, 0x01, 0x1F, 0xCF};
-    constexpr static int READ_SERIAL_NO_RECV_MSG_LEN = 14;
+    constexpr static int READ_SERIAL_NO_RECV_MSG_LEN_ = 14;
+    constexpr static char READ_SW_VER_SEND_MSG_[] = {0x11, 0x01, 0x1E, 0xD0};
+    constexpr static int READ_SW_VER_RECV_MSG_LEN_ = 17;
 };
 }  // namespace pm5000s
 
