@@ -5,6 +5,10 @@
 using namespace pm5000s;
 
 int main(int argc, char const* const* const argv) {
+    std::cout << "pm5000s : v" << PM5000S_VERSION_MAJOR << '.'
+              << PM5000S_VERSION_MINOR << '.' << PM5000S_VERSION_PATCH
+              << std::endl;
+
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <Serial Device>" << std::endl;
         return -1;

@@ -48,6 +48,11 @@ public:
         NOT_ENOUGH_DATA_ERR = 2,  // when not all data's received
         CHECKSUM_ERR = 3,         // when checksum failed
         NOT_OPENED_ERR = 4,       // when device not opend
+
+        MEASURE_NOT_OPENED_ERR = 11,  // When fail to open particle measurement
+        MEASURE_NOT_CLOSED_ERR = 12,  // When fail to close particle measurement
+
+        UNKNOWN_ERR = -1
     };
 
     static char const* StrError(ErrorCode err_code) {
@@ -164,16 +169,68 @@ public:
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
-        constexpr int SW_VER_LEN = 13;
-        sw_ver.resize(SW_VER_LEN);
-        for (int i = 0; i < SW_VER_LEN; ++i) {
+        sw_ver.resize(READ_SW_VER_LEN_);
+        for (int i = 0; i < READ_SW_VER_LEN_; ++i) {
             sw_ver[i] = READ_BUF_[POS_DATA_START_ + i];
         }
 
         return ErrorCode::OK;
     }
 
-    void FlushReceivedBuffer() { Read(); }
+    ErrorCode OpenParticleMeasurement() const {
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        write(fd_, OPEN_PRTCL_MSR_SEND_MSG_, sizeof(OPEN_PRTCL_MSR_SEND_MSG_));
+
+        int nread = Read();
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < OPEN_CLOSE_PRTCL_RECV_MSG_LEN_) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        if (READ_BUF_[OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_] !=
+            OPEN_CLOSE_PRTCL_OPEN_DF_) {
+            return ErrorCode::MEASURE_NOT_OPENED_ERR;
+        }
+
+        return ErrorCode::OK;
+    }
+
+    ErrorCode CloseParticleMeasurement() const {
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        write(fd_, CLOSE_PRTCL_MSR_SEND_MSG_,
+              sizeof(CLOSE_PRTCL_MSR_SEND_MSG_));
+
+        int nread = Read();
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < OPEN_CLOSE_PRTCL_RECV_MSG_LEN_) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        if (READ_BUF_[OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_] !=
+            OPEN_CLOSE_PRTCL_CLOSE_DF_) {
+            return ErrorCode::MEASURE_NOT_CLOSED_ERR;
+        }
+
+        return ErrorCode::OK;
+    }
+
+    void FlushReceivedBuffer() const { Read(); }
 
     const std::string& GetDevicePath() const { return device_path_; }
 
@@ -228,9 +285,8 @@ private:
         tty.c_oflag &= ~ONLCR;  // Prevent conversion of newline to carriage
                                 // return/line feed
 
-        tty.c_cc[VTIME] = 5;  // Wait for up to 1s(10 deciseconds)
-        tty.c_cc[VMIN] = 56;  // Wait until getting 2 characters at least, which
-                              // is (HEAD, LEN)
+        tty.c_cc[VTIME] = 1;  // Wait for up to 0.1s(10 deciseconds)
+        tty.c_cc[VMIN] = 56;
 
         // Set in/out baud rate
         cfsetispeed(&tty, BAUD_RATE);
@@ -284,10 +340,23 @@ private:
     constexpr static int POS_CMD_ = 2;
     constexpr static int POS_DATA_START_ = 3;
 
-    constexpr static char READ_SERIAL_NO_SEND_MSG_[] = {0x11, 0x01, 0x1F, 0xCF};
+    constexpr static char READ_SERIAL_NO_SEND_MSG_[] = {'\x11', '\x01', '\x1F',
+                                                        '\xCF'};
     constexpr static int READ_SERIAL_NO_RECV_MSG_LEN_ = 14;
-    constexpr static char READ_SW_VER_SEND_MSG_[] = {0x11, 0x01, 0x1E, 0xD0};
+
+    constexpr static char READ_SW_VER_SEND_MSG_[] = {'\x11', '\x01', '\x1E',
+                                                     '\xD0'};
     constexpr static int READ_SW_VER_RECV_MSG_LEN_ = 17;
+    constexpr static int READ_SW_VER_LEN_ = 13;
+
+    constexpr static char OPEN_PRTCL_MSR_SEND_MSG_[] = {'\x11', '\x03', '\x0C',
+                                                        '\x02', '\x1E', '\xC0'};
+    constexpr static char CLOSE_PRTCL_MSR_SEND_MSG_[] = {
+        '\x11', '\x03', '\x0C', '\x01', '\x1E', '\xC1'};
+    constexpr static int OPEN_CLOSE_PRTCL_RECV_MSG_LEN_ = 5;
+    constexpr static int OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_ = 3;
+    constexpr static char OPEN_CLOSE_PRTCL_OPEN_DF_ = '\x02';
+    constexpr static char OPEN_CLOSE_PRTCL_CLOSE_DF_ = '\x01';
 };
 }  // namespace pm5000s
 
