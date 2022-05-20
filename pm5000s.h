@@ -208,8 +208,7 @@ public:
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
-        if (READ_BUF_[OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_] !=
-            OPEN_CLOSE_PRTCL_OPEN_DF_) {
+        if (READ_BUF_[POS_DATA_START_] != OPEN_CLOSE_PRTCL_OPEN_DATA_) {
             return ErrorCode::MEASURE_NOT_OPENED_ERR;
         }
 
@@ -235,15 +234,14 @@ public:
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
-        if (READ_BUF_[OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_] !=
-            OPEN_CLOSE_PRTCL_CLOSE_DF_) {
+        if (READ_BUF_[POS_DATA_START_] != OPEN_CLOSE_PRTCL_CLOSE_DATA_) {
             return ErrorCode::MEASURE_NOT_CLOSED_ERR;
         }
 
         return ErrorCode::OK;
     }
 
-    ErrorCode ReadCalibCoeff(char& coeff) const {
+    ErrorCode ReadCalibCoeff(unsigned char& coeff) const {
         coeff = 0;
 
         if (!IsOpened()) {
@@ -264,12 +262,14 @@ public:
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
-        coeff = READ_BUF_[SETUP_READ_CALIB_COEF_RECV_MSG_DF_POS_];
+        coeff = READ_BUF_[POS_DATA_START_];
         return ErrorCode::OK;
     }
+
     // valid coeff range: 10 ~ 25
-    ErrorCode SetupCalibCoeff(char coeff, char& set_coeff) const {
-        set_coeff = 0;
+    ErrorCode SetupCalibCoeff(unsigned char coeff,
+                              unsigned char& read_coeff) const {
+        read_coeff = 0;
 
         if (coeff < 10 || coeff > 25) {
             return ErrorCode::INVALID_CALIB_COEF_ERR;
@@ -279,9 +279,9 @@ public:
             return ErrorCode::NOT_OPENED_ERR;
         }
 
-        char checksum =
-            static_cast<char>(256 - ('\x11' + '\x02' + '\x07' + coeff));
-        char send_msg[] = {'\x11', '\x02', '\x07', coeff, checksum};
+        unsigned char checksum =
+            static_cast<unsigned char>(256 - (0x11 + 0x02 + 0x07 + coeff));
+        unsigned char send_msg[] = {0x11, 0x02, 0x07, coeff, checksum};
 
         write(fd_, send_msg, sizeof(send_msg));
 
@@ -296,14 +296,16 @@ public:
             return ErrorCode::NOT_ENOUGH_DATA_ERR;
         }
 
-        set_coeff = READ_BUF_[SETUP_READ_CALIB_COEF_RECV_MSG_DF_POS_];
+        read_coeff = READ_BUF_[POS_DATA_START_];
 
-        if (coeff != set_coeff) {
+        if (coeff != read_coeff) {
             return ErrorCode::CALIB_COEF_NOT_SET_ERR;
         }
 
         return ErrorCode::OK;
     }
+
+    // ErrorCode ReadParticleMeasurement(uint32_t)
 
     void FlushReceivedBuffer() const { Read(); }
 
@@ -387,11 +389,12 @@ private:
         }
 
         int checksum_pos = data_len + 2;
-        char checksum = 0;
+        unsigned char checksum = 0;
         for (int pos = 0; pos < response_len - 1; ++pos) {
             checksum += READ_BUF_[pos];
         }
-        if (READ_BUF_[checksum_pos] != static_cast<char>(256 - checksum)) {
+        if (READ_BUF_[checksum_pos] !=
+            static_cast<unsigned char>(256 - checksum)) {
             return ErrorCode::CHECKSUM_ERR;
         }
 
@@ -407,36 +410,50 @@ private:
 
     int fd_;
     std::string device_path_;
-    mutable char READ_BUF_[256];
+    mutable unsigned char READ_BUF_[256];
 
-    constexpr static char RX_HEAD_ = 0x16;
+    constexpr static unsigned char RX_HEAD_ = 0x16;
     constexpr static int POS_HEAD_ = 0;
     constexpr static int POS_LEN_ = 1;
     constexpr static int POS_CMD_ = 2;
     constexpr static int POS_DATA_START_ = 3;
 
-    constexpr static char READ_SERIAL_NO_SEND_MSG_[] = {'\x11', '\x01', '\x1F',
-                                                        '\xCF'};
+    // Read Serial Number Message Related
+    constexpr static unsigned char READ_SERIAL_NO_SEND_MSG_[] = {0x11, 0x01,
+                                                                 0x1F, 0xCF};
     constexpr static int READ_SERIAL_NO_RECV_MSG_LEN_ = 14;
 
-    constexpr static char READ_SW_VER_SEND_MSG_[] = {'\x11', '\x01', '\x1E',
-                                                     '\xD0'};
+    // Read SW Version Message Related
+    constexpr static unsigned char READ_SW_VER_SEND_MSG_[] = {0x11, 0x01, 0x1E,
+                                                              0xD0};
     constexpr static int READ_SW_VER_RECV_MSG_LEN_ = 17;
     constexpr static int READ_SW_VER_LEN_ = 13;
 
-    constexpr static char OPEN_PRTCL_MSR_SEND_MSG_[] = {'\x11', '\x03', '\x0C',
-                                                        '\x02', '\x1E', '\xC0'};
-    constexpr static char CLOSE_PRTCL_MSR_SEND_MSG_[] = {
-        '\x11', '\x03', '\x0C', '\x01', '\x1E', '\xC1'};
+    constexpr static unsigned char OPEN_PRTCL_MSR_SEND_MSG_[] = {
+        0x11, 0x03, 0x0C, 0x02, 0x1E, 0xC0};
+    // Open/Close Particle Measurement Message Related
+    constexpr static unsigned char CLOSE_PRTCL_MSR_SEND_MSG_[] = {
+        0x11, 0x03, 0x0C, 0x01, 0x1E, 0xC1};
     constexpr static int OPEN_CLOSE_PRTCL_RECV_MSG_LEN_ = 5;
-    constexpr static int OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_ = 3;
-    constexpr static char OPEN_CLOSE_PRTCL_OPEN_DF_ = '\x02';
-    constexpr static char OPEN_CLOSE_PRTCL_CLOSE_DF_ = '\x01';
+    constexpr static unsigned char OPEN_CLOSE_PRTCL_OPEN_DATA_ = 0x02;
+    constexpr static unsigned char OPEN_CLOSE_PRTCL_CLOSE_DATA_ = 0x01;
 
-    constexpr static char READ_CALIB_COEF_SEND_MSG_[] = {'\x11', '\x01', '\x07',
-                                                         '\xE7'};
+    // Read/Setup Particle Calibration Coefficient Message Related
+    constexpr static unsigned char READ_CALIB_COEF_SEND_MSG_[] = {0x11, 0x01,
+                                                                  0x07, 0xE7};
     constexpr static int SETUP_READ_CALIB_COEF_RECV_MSG_LEN_ = 5;
-    constexpr static int SETUP_READ_CALIB_COEF_RECV_MSG_DF_POS_ = 3;
+
+    // Read Particle Measurement Result Related
+    constexpr static unsigned char READ_PRTCL_MSR_SEND_MSG_[] = {
+        0x11, 0x02, 0x0B, 0x07, 0xDB};
+    constexpr static int READ_PRTCL_MSG_RECV_MSG_LEN_ = 56;
+    constexpr static int READ_PRTCL_MSG_DATA_0_3_UM_OFFSET_ = 24;
+    constexpr static int READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_ = 24;
+    constexpr static int READ_PRTCL_MSG_DATA_1_0_UM_OFFSET_ = 32;
+    constexpr static int READ_PRTCL_MSG_DATA_2_5_UM_OFFSET_ = 36;
+    constexpr static int READ_PRTCL_MSG_DATA_5_0_UM_OFFSET_ = 40;
+    constexpr static int READ_PRTCL_MSG_DATA_10_0_UM_OFFSET_ = 44;
+    constexpr static int READ_PRTCL_MSG_DATA_ALARM_OFFSET_ = 48;
 };
 }  // namespace pm5000s
 
