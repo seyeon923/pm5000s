@@ -58,6 +58,66 @@ public:
         UNKNOWN_ERR = -1
     };
 
+    // Alarm Bits
+    constexpr static unsigned char ALARM_LASER_TUBE_FAILURE = 0b01000000;
+    constexpr static unsigned char ALARM_FAN_FAILURE = 0b00100000;
+    constexpr static unsigned char ALARM_FOULING = 0b00010000;
+    constexpr static unsigned char ALARM_LOW_TEMPERATURE = 0b00001000;
+    constexpr static unsigned char ALARM_HIGH_TEMPERATURE = 0b00000100;
+    constexpr static unsigned char ALARM_FAN_LOW_SPEED = 0b00000010;
+    constexpr static unsigned char ALARM_FAN_HIHG_SPEED = 0b00000001;
+
+    static bool IsAlarmedLaserTubeFailure(unsigned char alarm) {
+        return alarm & ALARM_LASER_TUBE_FAILURE;
+    }
+    static bool IsAlarmedFanFailure(unsigned char alarm) {
+        return alarm & ALARM_FAN_FAILURE;
+    }
+    static bool IsAlarmedFouling(unsigned char alarm) {
+        return alarm & ALARM_FOULING;
+    }
+    static bool IsAlarmedLowTemperature(unsigned char alarm) {
+        return alarm & ALARM_LOW_TEMPERATURE;
+    }
+    static bool IsAlarmedHighTemperature(unsigned char alarm) {
+        return alarm & ALARM_HIGH_TEMPERATURE;
+    }
+    static bool IsAlarmedFanLowSpeed(unsigned char alarm) {
+        return alarm & ALARM_FAN_LOW_SPEED;
+    }
+    static bool IsAlarmedFanHighSpeed(unsigned char alarm) {
+        return alarm & ALARM_FAN_HIHG_SPEED;
+    }
+    static std::string AlarmToString(unsigned char alarm) {
+        if (alarm == 0) {
+            return "No Alarm";
+        }
+
+        std::stringstream ss{"Alarm:"};
+        if (IsAlarmedLaserTubeFailure(alarm)) {
+            ss << " LASER_TUBE_FAIULRE";
+        }
+        if (IsAlarmedFanFailure(alarm)) {
+            ss << " FAN_FAILURE";
+        }
+        if (IsAlarmedFouling(alarm)) {
+            ss << " FOULING";
+        }
+        if (IsAlarmedLowTemperature(alarm)) {
+            ss << " LOW_TEMP";
+        }
+        if (IsAlarmedHighTemperature(alarm)) {
+            ss << " HIHG_TEMP";
+        }
+        if (IsAlarmedFanLowSpeed(alarm)) {
+            ss << " FAN_LOW_SPEED";
+        }
+        if (IsAlarmedFanHighSpeed(alarm)) {
+            ss << " FAN_HIGH_SPEED";
+        }
+        return ss.str();
+    }
+
     static char const* StrError(ErrorCode err_code) {
         switch (err_code) {
             case ErrorCode::OK:
