@@ -279,8 +279,9 @@ public:
             return ErrorCode::NOT_OPENED_ERR;
         }
 
-        unsigned char checksum =
-            static_cast<unsigned char>(256 - (0x11 + 0x02 + 0x07 + coeff));
+        unsigned char checksum = static_cast<unsigned char>(
+            256 - ((unsigned char)0x11 + (unsigned char)0x02 +
+                   (unsigned char)0x07 + coeff));
         unsigned char send_msg[] = {0x11, 0x02, 0x07, coeff, checksum};
 
         write(fd_, send_msg, sizeof(send_msg));
@@ -305,7 +306,104 @@ public:
         return ErrorCode::OK;
     }
 
-    // ErrorCode ReadParticleMeasurement(uint32_t)
+    ErrorCode ReadParticleMeasurement(
+        uint32_t& prtcl_0_3_um, uint32_t& prtcl_0_5_um, uint32_t& prtcl_1_0_um,
+        uint32_t& prtcl_2_5_um, uint32_t& prtcl_5_0_um, uint32_t& prtcl_10_0_um,
+        unsigned char& alarm) {
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        write(fd_, READ_PRTCL_MSR_SEND_MSG_, sizeof(READ_PRTCL_MSR_SEND_MSG_));
+
+        int nread = Read();
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < READ_PRTCL_MSG_RECV_MSG_LEN_) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        prtcl_0_3_um =
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_3_UM_OFFSET_]
+                << 24 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_3_UM_OFFSET_ + 1]
+                << 16 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_3_UM_OFFSET_ + 2]
+                << 8 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_3_UM_OFFSET_ + 3];
+        prtcl_0_5_um =
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_]
+                << 24 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_ + 1]
+                << 16 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_ + 2]
+                << 8 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_ + 3];
+        prtcl_1_0_um =
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_1_0_UM_OFFSET_]
+                << 24 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_1_0_UM_OFFSET_ + 1]
+                << 16 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_1_0_UM_OFFSET_ + 2]
+                << 8 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_1_0_UM_OFFSET_ + 3];
+        prtcl_2_5_um =
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_2_5_UM_OFFSET_]
+                << 24 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_2_5_UM_OFFSET_ + 1]
+                << 16 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_2_5_UM_OFFSET_ + 2]
+                << 8 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_2_5_UM_OFFSET_ + 3];
+        prtcl_5_0_um =
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_5_0_UM_OFFSET_]
+                << 24 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_5_0_UM_OFFSET_ + 1]
+                << 16 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_5_0_UM_OFFSET_ + 2]
+                << 8 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_5_0_UM_OFFSET_ + 3];
+        prtcl_10_0_um =
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_10_0_UM_OFFSET_]
+                << 24 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_10_0_UM_OFFSET_ + 1]
+                << 16 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_10_0_UM_OFFSET_ + 2]
+                << 8 |
+            (uint32_t)READ_BUF_[POS_DATA_START_ +
+                                READ_PRTCL_MSG_DATA_10_0_UM_OFFSET_ + 3];
+
+        alarm = READ_BUF_[POS_DATA_START_ + READ_PRTCL_MSG_DATA_ALARM_OFFSET_];
+
+        return ErrorCode::OK;
+    }
 
     void FlushReceivedBuffer() const { Read(); }
 
