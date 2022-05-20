@@ -369,7 +369,7 @@ public:
     ErrorCode ReadParticleMeasurement(
         uint32_t& prtcl_0_3_um, uint32_t& prtcl_0_5_um, uint32_t& prtcl_1_0_um,
         uint32_t& prtcl_2_5_um, uint32_t& prtcl_5_0_um, uint32_t& prtcl_10_0_um,
-        unsigned char& alarm) {
+        unsigned char& alarm) const {
         if (!IsOpened()) {
             return ErrorCode::NOT_OPENED_ERR;
         }
