@@ -1,10 +1,10 @@
-#include "pm5000s.h"
-
 #include <iostream>
 #include <ios>
 #include <limits>
 #include <string>
 #include <sstream>
+
+#include "pm5000s.h"
 
 using namespace pm5000s;
 
@@ -136,11 +136,11 @@ inline void CloseParticleMeasurment(const SerialPort& serial) {
     std::cout << "=> Success to close particle measurment" << std::endl;
 }
 inline void ReadParticleMeasurment(const SerialPort& serial) {
-    uint32_t pn_0_3_um, pn_0_5_um, pn_1_0_um, pn_2_5_um, pn_5_0_um, pn_10_0_um;
+    uint32_t pm_0_3_um, pm_0_5_um, pm_1_0_um, pm_2_5_um, pm_5_0_um, pm_10_0_um;
     unsigned char alarm;
     auto err =
-        serial.ReadParticleMeasurement(pn_0_3_um, pn_0_5_um, pn_1_0_um,
-                                       pn_2_5_um, pn_5_0_um, pn_10_0_um, alarm);
+        serial.ReadParticleMeasurement(pm_0_3_um, pm_0_5_um, pm_1_0_um,
+                                       pm_2_5_um, pm_5_0_um, pm_10_0_um, alarm);
     if (err != OK) {
         std::cout << "Failed to read particle measurement: "
                   << SerialPort::StrError(err) << std::endl;
@@ -148,12 +148,12 @@ inline void ReadParticleMeasurment(const SerialPort& serial) {
     }
 
     std::cout << "-----------------------------------\n"
-              << "  >0.3um: " << pn_0_3_um << " pcs/L\n"
-              << "  >0.5um: " << pn_0_5_um << " pcs/L\n"
-              << "  >1.0um: " << pn_1_0_um << " pcs/L\n"
-              << "  >2.5um: " << pn_2_5_um << " pcs/L\n"
-              << "  >5.0um: " << pn_5_0_um << " pcs/L\n"
-              << "  >10.0um: " << pn_10_0_um << " pcs/L\n";
+              << "  >0.3um: " << pm_0_3_um << " pcs/L\n"
+              << "  >0.5um: " << pm_0_5_um << " pcs/L\n"
+              << "  >1.0um: " << pm_1_0_um << " pcs/L\n"
+              << "  >2.5um: " << pm_2_5_um << " pcs/L\n"
+              << "  >5.0um: " << pm_5_0_um << " pcs/L\n"
+              << "  >10.0um: " << pm_10_0_um << " pcs/L\n";
     if (alarm) {
         std::cout << "  " << SerialPort::AlarmToString(alarm) << '\n';
     }
