@@ -52,6 +52,9 @@ public:
         MEASURE_NOT_OPENED_ERR = 11,  // When fail to open particle measurement
         MEASURE_NOT_CLOSED_ERR = 12,  // When fail to close particle measurement
 
+        CALIB_COEF_NOT_SET_ERR = 21,
+        INVALID_CALIB_COEF_ERR = 22,
+
         UNKNOWN_ERR = -1
     };
 
@@ -67,6 +70,16 @@ public:
                 return "Checksum Error";
             case ErrorCode::NOT_OPENED_ERR:
                 return "Device Not Opened";
+            case ErrorCode::MEASURE_NOT_OPENED_ERR:
+                return "Particle Measurement Not Opened";
+            case ErrorCode::MEASURE_NOT_CLOSED_ERR:
+                return "Particle Measurment Not Closed";
+            case ErrorCode::CALIB_COEF_NOT_SET_ERR:
+                return "Particle Calibration Coefficient Not Set Correctly";
+            case ErrorCode::INVALID_CALIB_COEF_ERR:
+                return "Invalid Calibration Coefficient Set Value";
+            case ErrorCode::UNKNOWN_ERR:
+                [[fallthrough]];
             default:
                 return "Unknown Error";
         }
@@ -230,6 +243,68 @@ public:
         return ErrorCode::OK;
     }
 
+    ErrorCode ReadCalibCoeff(char& coeff) const {
+        coeff = 0;
+
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        write(fd_, READ_CALIB_COEF_SEND_MSG_,
+              sizeof(READ_CALIB_COEF_SEND_MSG_));
+
+        int nread = Read();
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < SETUP_READ_CALIB_COEF_RECV_MSG_LEN_) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        coeff = READ_BUF_[SETUP_READ_CALIB_COEF_RECV_MSG_DF_POS_];
+        return ErrorCode::OK;
+    }
+    // valid coeff range: 10 ~ 25
+    ErrorCode SetupCalibCoeff(char coeff, char& set_coeff) const {
+        set_coeff = 0;
+
+        if (coeff < 10 || coeff > 25) {
+            return ErrorCode::INVALID_CALIB_COEF_ERR;
+        }
+
+        if (!IsOpened()) {
+            return ErrorCode::NOT_OPENED_ERR;
+        }
+
+        char checksum =
+            static_cast<char>(256 - ('\x11' + '\x02' + '\x07' + coeff));
+        char send_msg[] = {'\x11', '\x02', '\x07', coeff, checksum};
+
+        write(fd_, send_msg, sizeof(send_msg));
+
+        int nread = Read();
+
+        auto err = CheckReceivedData(nread);
+        if (err != ErrorCode::OK) {
+            return err;
+        }
+
+        if (nread < SETUP_READ_CALIB_COEF_RECV_MSG_LEN_) {
+            return ErrorCode::NOT_ENOUGH_DATA_ERR;
+        }
+
+        set_coeff = READ_BUF_[SETUP_READ_CALIB_COEF_RECV_MSG_DF_POS_];
+
+        if (coeff != set_coeff) {
+            return ErrorCode::CALIB_COEF_NOT_SET_ERR;
+        }
+
+        return ErrorCode::OK;
+    }
+
     void FlushReceivedBuffer() const { Read(); }
 
     const std::string& GetDevicePath() const { return device_path_; }
@@ -357,6 +432,11 @@ private:
     constexpr static int OPEN_CLOSE_PRTCL_RECV_MSG_DF_POS_ = 3;
     constexpr static char OPEN_CLOSE_PRTCL_OPEN_DF_ = '\x02';
     constexpr static char OPEN_CLOSE_PRTCL_CLOSE_DF_ = '\x01';
+
+    constexpr static char READ_CALIB_COEF_SEND_MSG_[] = {'\x11', '\x01', '\x07',
+                                                         '\xE7'};
+    constexpr static int SETUP_READ_CALIB_COEF_RECV_MSG_LEN_ = 5;
+    constexpr static int SETUP_READ_CALIB_COEF_RECV_MSG_DF_POS_ = 3;
 };
 }  // namespace pm5000s
 
