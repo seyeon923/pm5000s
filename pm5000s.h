@@ -606,7 +606,7 @@ private:
         0x11, 0x02, 0x0B, 0x07, 0xDB};
     constexpr static int READ_PRTCL_MSG_RECV_MSG_LEN_ = 56;
     constexpr static int READ_PRTCL_MSG_DATA_0_3_UM_OFFSET_ = 24;
-    constexpr static int READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_ = 24;
+    constexpr static int READ_PRTCL_MSG_DATA_0_5_UM_OFFSET_ = 28;
     constexpr static int READ_PRTCL_MSG_DATA_1_0_UM_OFFSET_ = 32;
     constexpr static int READ_PRTCL_MSG_DATA_2_5_UM_OFFSET_ = 36;
     constexpr static int READ_PRTCL_MSG_DATA_5_0_UM_OFFSET_ = 40;
