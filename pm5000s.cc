@@ -3,18 +3,12 @@
 #include <iostream>
 #include <ios>
 #include <limits>
+#include <string>
+#include <sstream>
 
 using namespace pm5000s;
 
 constexpr SerialPort::ErrorCode OK = SerialPort::ErrorCode::OK;
-
-inline void ClearCin() {
-    if (!std::cin.good()) {
-        std::cin.clear();
-    }
-
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max());
-}
 
 enum class Command {
     READ_SERIAL_NO = 1,
@@ -27,6 +21,17 @@ enum class Command {
     READ_DEVICE_PATH = 8,
     EXIT = 9
 };
+
+template <typename T>
+bool Read(T& ret) {
+    std::string line;
+    std::getline(std::cin, line);
+
+    std::stringstream ss{line};
+    ss >> ret;
+
+    return !ss.fail();
+}
 
 inline void ShowPrompt() {
     std::cout << "Enter Command Number you want to execute\n"
@@ -87,12 +92,8 @@ inline void SetupParticleCalibrationCoefficient(const SerialPort& serial) {
     std::cout << "Enter Coefficient(10 ~ 25): ";
     std::cout.flush();
 
-    ClearCin();
-
     unsigned char coeffi;
-    std::cin >> coeffi;
-
-    if (std::cin.fail()) {
+    if (!Read(coeffi)) {
         std::cout << "Invalid Input for Coefficient" << std::endl;
         return;
     }
@@ -177,17 +178,15 @@ int main(int argc, char const* const* const argv) {
     }
 
     int cmd;
-    bool loop = true;
-    while (loop) {
+    std::string line;
+    while (true) {
         ShowPrompt();
 
-        ClearCin();
-        std::cin >> cmd;
-
-        if (std::cin.fail()) {
-            std::cout << "Invalid Command!" << std::endl;
+        if (!Read(cmd)) {
+            std::cout << "\nInvalid Command" << std::endl;
             continue;
         }
+        std::cout << '\n';
 
         switch (cmd) {
             case static_cast<int>(Command::READ_SERIAL_NO):
@@ -215,12 +214,12 @@ int main(int argc, char const* const* const argv) {
                 ReadDevicePath(serial);
                 break;
             case static_cast<int>(Command::EXIT):
-                loop = false;
-                break;
+                return 0;
             default:
                 std::cout << "Invalid Command " << cmd << std::endl;
                 continue;
         }
+        std::getline(std::cin, line);
     }
 
     return 0;
