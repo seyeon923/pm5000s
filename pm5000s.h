@@ -326,12 +326,12 @@ public:
         return ErrorCode::OK;
     }
 
-    // valid coeff range: 10 ~ 25
+    // valid coeff range: 10 ~ 250
     ErrorCode SetupCalibCoeff(unsigned char coeff,
                               unsigned char& read_coeff) const {
         read_coeff = 0;
 
-        if (coeff < 10 || coeff > 25) {
+        if (coeff < 10 || coeff > 250) {
             return ErrorCode::INVALID_CALIB_COEF_ERR;
         }
 

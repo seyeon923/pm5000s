@@ -63,7 +63,7 @@ inline void ReadSerialNumber(const SerialPort& serial) {
                   << SerialPort::StrError(err) << std::endl;
         return;
     }
-    std::cout << "Serial Number: " << serial_no << std::endl;
+    std::cout << "=> Serial Number: " << serial_no << std::endl;
 }
 
 inline void ReadSwVersion(const SerialPort& serial) {
@@ -74,7 +74,7 @@ inline void ReadSwVersion(const SerialPort& serial) {
                   << std::endl;
         return;
     }
-    std::cout << "SW Version Number: " << sw_ver << std::endl;
+    std::cout << "=> SW Version Number: " << sw_ver << std::endl;
 }
 
 inline void ReadParticleCalibrationCoefficient(const SerialPort& serial) {
@@ -85,18 +85,26 @@ inline void ReadParticleCalibrationCoefficient(const SerialPort& serial) {
                   << SerialPort::StrError(err) << std::endl;
         return;
     }
-    std::cout << "Particle Calibration Coefficient: " << coeffi << "/100"
-              << std::endl;
+    std::cout << "=> Particle Calibration Coefficient: "
+              << static_cast<int>(coeffi) << "/100" << std::endl;
 }
 inline void SetupParticleCalibrationCoefficient(const SerialPort& serial) {
-    std::cout << "Enter Coefficient(10 ~ 25): ";
-    std::cout.flush();
+    int input;
+    while (true) {
+        std::cout << "Enter Coefficient(10 ~ 250): ";
+        std::cout.flush();
 
-    unsigned char coeffi;
-    if (!Read(coeffi)) {
-        std::cout << "Invalid Input for Coefficient" << std::endl;
-        return;
+        if (!Read(input)) {
+            std::cout << "Invalid Input for Coefficient" << std::endl;
+            continue;
+        }
+        if (input < 10 || input > 250) {
+            std::cout << "Invalid Coefficient Range" << std::endl;
+            continue;
+        }
+        break;
     }
+    unsigned char coeffi = static_cast<unsigned char>(input);
 
     unsigned char read_coeffi;
     auto err = serial.SetupCalibCoeff(coeffi, read_coeffi);
@@ -105,8 +113,8 @@ inline void SetupParticleCalibrationCoefficient(const SerialPort& serial) {
                   << SerialPort::StrError(err) << std::endl;
         return;
     }
-    std::cout << "Set Calibration Coefficient to " << read_coeffi << "/100"
-              << std::endl;
+    std::cout << "=> Set Calibration Coefficient to "
+              << static_cast<int>(read_coeffi) << "/100" << std::endl;
 }
 inline void OpenParticleMeasurement(const SerialPort& serial) {
     auto err = serial.OpenParticleMeasurement();
@@ -116,7 +124,7 @@ inline void OpenParticleMeasurement(const SerialPort& serial) {
         return;
     }
 
-    std::cout << "Success to open particle measurment" << std::endl;
+    std::cout << "=> Success to open particle measurment" << std::endl;
 }
 inline void CloseParticleMeasurment(const SerialPort& serial) {
     auto err = serial.CloseParticleMeasurement();
@@ -125,7 +133,7 @@ inline void CloseParticleMeasurment(const SerialPort& serial) {
                   << SerialPort::StrError(err) << std::endl;
         return;
     }
-    std::cout << "Success to close particle measurment" << std::endl;
+    std::cout << "=> Success to close particle measurment" << std::endl;
 }
 inline void ReadParticleMeasurment(const SerialPort& serial) {
     uint32_t pn_0_3_um, pn_0_5_um, pn_1_0_um, pn_2_5_um, pn_5_0_um, pn_10_0_um;
@@ -139,19 +147,20 @@ inline void ReadParticleMeasurment(const SerialPort& serial) {
         return;
     }
 
-    std::cout << ">0.3um: " << pn_0_3_um << " pcs/L\n"
-              << ">0.5um: " << pn_0_5_um << " pcs/L\n"
-              << ">1.0um: " << pn_1_0_um << " pcs/L\n"
-              << ">2.5um: " << pn_2_5_um << " pcs/L\n"
-              << ">5.0um: " << pn_5_0_um << " pcs/L\n"
-              << ">10.0um: " << pn_10_0_um << " pcs/L\n";
+    std::cout << "-----------------------------------\n"
+              << "  >0.3um: " << pn_0_3_um << " pcs/L\n"
+              << "  >0.5um: " << pn_0_5_um << " pcs/L\n"
+              << "  >1.0um: " << pn_1_0_um << " pcs/L\n"
+              << "  >2.5um: " << pn_2_5_um << " pcs/L\n"
+              << "  >5.0um: " << pn_5_0_um << " pcs/L\n"
+              << "  >10.0um: " << pn_10_0_um << " pcs/L\n";
     if (alarm) {
-        std::cout << SerialPort::AlarmToString(alarm) << '\n';
+        std::cout << "  " << SerialPort::AlarmToString(alarm) << '\n';
     }
-    std::cout.flush();
+    std::cout << "-----------------------------------" << std::endl;
 }
 inline void ReadDevicePath(const SerialPort& serial) {
-    std::cout << "Device Path: " << serial.GetDevicePath();
+    std::cout << "=> Device Path: " << serial.GetDevicePath();
     if (serial.IsOpened()) {
         std::cout << "(Opened)" << std::endl;
     } else {
@@ -219,6 +228,8 @@ int main(int argc, char const* const* const argv) {
                 std::cout << "Invalid Command " << cmd << std::endl;
                 continue;
         }
+
+        std::cout << "Please enter \'Enter\' for next input" << std::endl;
         std::getline(std::cin, line);
     }
 
