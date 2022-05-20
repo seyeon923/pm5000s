@@ -1,0 +1,10 @@
+[Unit]
+Description=PM5000s Service Daemon logging measured results
+
+[Service]
+Type=simple
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/pm5000sd %i /etc/pm5000s/logs
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
