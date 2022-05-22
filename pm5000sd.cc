@@ -214,7 +214,7 @@ int main(int argc, char const* const* const argv) {
                   << SerialPort::StrError(err) << std::endl;
         return static_cast<int>(err);
     }
-    if (err = serial.ReadSwVersion(serial_no); err != OK) {
+    if (err = serial.ReadSwVersion(sw_ver); err != OK) {
         std::cerr << "Failed to read sensor's SW version: "
                   << SerialPort::StrError(err) << std::endl;
         return static_cast<int>(err);
