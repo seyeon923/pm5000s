@@ -20,6 +20,5 @@ install(TARGETS pm5000s pm5000sd
 install(FILES pm5000sd.config
     DESTINATION etc/pm5000s)
 
-configure_file(pm5000s.service.in pm5000s.service)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pm5000s.service"
+install(FILES pm5000s.service
     DESTINATION /etc/systemd/system)
