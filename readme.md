@@ -24,10 +24,10 @@ sudo cmake --install build
 
 ## How to Install from Packaged Shell Script
 
-다음은 배포된 `pm5000s-\<version\>-Linux.sh` 에서 설치하는 방법입니다.
+다음은 배포된 `pm5000s-\<version\>-<architecture>.sh` 에서 설치하는 방법입니다.
 
 ```sh
-sudo ./pm5000s-<version>-Linux.sh --prefix=/usr/local --exclude-subdir --skip-license
+sudo ./pm5000s-<version>-<architecture>.sh --prefix=/usr/local --exclude-subdir --skip-license
 ```
 
 ## How to Use
