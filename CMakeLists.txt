@@ -21,4 +21,11 @@ install(FILES pm5000sd.config
     DESTINATION etc/pm5000s)
 
 install(FILES pm5000s.service
-    DESTINATION /etc/systemd/system)
+    DESTINATION lib/systemd/system)
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_VENDOR "LG Innotek")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+include(CPack)
