@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 
 constexpr SerialPort::ErrorCode OK = SerialPort::ErrorCode::OK;
 
-constexpr char CONFIG_FILE_PATH[] = "/usr/local/pm5000s/pm5000sd.config";
+constexpr char CONFIG_FILE_PATH[] = "/usr/local/etc/pm5000s/pm5000sd.config";
 
 struct Config {
     static constexpr char KEY_MEASURE_INTERVAL_MS[] = "measure_interval_ms";
