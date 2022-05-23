@@ -74,22 +74,22 @@ sudo ./pm5000s-<version>-<architecture>.sh --prefix=/usr/local --exclude-subdir 
     다음 명령어를 통해 `/dev/ttyAMA1` 에 연결된 센서에서 주기적으로 측정한 결과를 `/etc/pm5000s/logs`에 저장합니다.
 
     ```sh
-    systemctl start pm5000s@/dev/ttyAMA1
+    systemctl start pm5000s@ttyAMA1
     ```
 
     재부팅 후에도 해당 서비스가 자동으로 시작되도록 하려면 다음 명령어를 입력합니다.
 
     ```sh
-    systemctl enable pm5000s@/dev/ttyAMA1
+    systemctl enable pm5000s@ttyAMA1
     ```
 
     서비스 동작 확인은 다음 명령어를 통해 확인할 수 있습니다.
 
     ```sh
-    systemctl status pm5000s@/dev/ttyAMA1
+    systemctl status pm5000s@ttyAMA1
     ```
 
-    다른 디바이스에 대해서도 서비스 명의 `@` 뒤에 해당하는 디바이스 경로를 입력하여 서비스를 실행할 수 있습니다.
+    다른 디바이스에 대해서도 서비스 명의 `@` 뒤에 해당하는 디바이스 명을 입력하여 서비스를 실행할 수 있습니다.
 
     해당 서비스의 측정 주기 및 재시도 횟수는 `/usr/local/etc/pm5000s/pm5000sd.config` 파일을 수정하면 됩니다.  
     `pm5000sd.config` 파일은 다음과 같이 생겼습니다.

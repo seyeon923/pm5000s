@@ -20,7 +20,7 @@ install(TARGETS pm5000s pm5000sd
 install(FILES pm5000sd.config
     DESTINATION etc/pm5000s)
 
-install(FILES pm5000s.service
+install(FILES pm5000s@.service
     DESTINATION lib/systemd/system)
 
 execute_process(COMMAND uname -m 
