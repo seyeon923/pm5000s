@@ -7,6 +7,7 @@
 #include <string_view>
 #include <ios>
 #include <sstream>
+#include <iomanip>
 
 #include <string.h>
 #include <fcntl.h>
@@ -208,16 +209,11 @@ public:
 
         std::stringstream ss;
         for (int i = 0; i < 5; ++i) {
-            int num = READ_BUF_[POS_DATA_START_ + i * 2] * 256 +
+            int num = READ_BUF_[POS_DATA_START_ + i * 2] << 8 |
                       READ_BUF_[POS_DATA_START_ + i * 2 + 1];
-            if (num) {
-                ss << num;
-            }
+            ss << std::setfill('0') << std::setw(4) << num;
         }
         serial_no = ss.str();
-        if (serial_no.empty()) {
-            serial_no = "0";
-        }
 
         return ErrorCode::OK;
     }
