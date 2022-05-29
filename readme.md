@@ -30,6 +30,12 @@ sudo cmake --install build
 sudo ./pm5000s-<version>-<architecture>.sh --prefix=/usr/local --exclude-subdir --skip-license
 ```
 
+> 위 설치 쉘 스크립트(*.sh)에 실행 권한이 없어 실행이 되지 않는 경우 chmod를 이용하여 실행 권한을 추가하고 실행해주시면 됩니다.
+>
+> ```sh
+> sudo chmod u+x ./pm5000s-<version>-<architecture>.sh
+> ```
+
 ## How to Use
 
 다음은 라즈베리 파이에서 해당 SW 사용법입니다.
@@ -74,19 +80,31 @@ sudo ./pm5000s-<version>-<architecture>.sh --prefix=/usr/local --exclude-subdir 
     다음 명령어를 통해 `/dev/ttyAMA1` 에 연결된 센서에서 주기적으로 측정한 결과를 `/etc/pm5000s/logs`에 저장합니다.
 
     ```sh
-    systemctl start pm5000s@ttyAMA1
+    sudo systemctl start pm5000s@ttyAMA1
     ```
 
     재부팅 후에도 해당 서비스가 자동으로 시작되도록 하려면 다음 명령어를 입력합니다.
 
     ```sh
-    systemctl enable pm5000s@ttyAMA1
+    sudo systemctl enable pm5000s@ttyAMA1
     ```
 
-    서비스 동작 확인은 다음 명령어를 통해 확인할 수 있습니다.
+    > 서비스 자동시작(설치) 취소는 `disable` 명령어를 사용합니다.
+    >
+    > ```sh
+    > sudo systemctl disable pm5000s@ttyAMA1
+    > ```
+
+    서비스 동작 확인은 `status` 명령어를 통해 확인할 수 있습니다.
 
     ```sh
     systemctl status pm5000s@ttyAMA1
+    ```
+
+    서비스 종료는 `stop` 명령어를 사용합니다.
+
+    ``` sh
+    sudo systemctl stop pm5000s@ttyAMA1
     ```
 
     다른 디바이스에 대해서도 서비스 명의 `@` 뒤에 해당하는 디바이스 명을 입력하여 서비스를 실행할 수 있습니다.
